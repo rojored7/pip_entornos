@@ -1,0 +1,367 @@
+openapi: 3.0.3
+info:
+  title: API de Huespedes (Guest)
+  version: 1.0.0
+  description: |
+    API profesional para la gestión de huéspedes en hoteles.
+    Seguridad basada en [JOSE](https://datatracker.ietf.org/wg/jose/about/): JWT, JWE, JWS, JWA.
+    Todas las operaciones requieren tokens válidos y firmados/cifrados según el estándar JOSE.
+    Los tokens deben ser enviados usando el header Authorization: Bearer {token}.
+
+servers:
+  - url: https://api.labred.uk
+tags:
+  - name: Guest
+    description: Endpoints para gestión de huéspedes
+
+paths:
+  /guests:
+    put:
+      tags: [Guest]
+      summary: Crear un huésped
+      description: Crea un nuevo huésped en el sistema. Si ya existe, responde 409.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GuestCreate"
+      responses:
+        '200':
+          description: Huésped creado correctamente
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Guest"
+        '400':
+          description: Petición mal formada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '401':
+          description: No autorizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '409':
+          description: Huésped ya existe (conflicto)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /guests/{guest_id}:
+    get:
+      tags: [Guest]
+      summary: Obtener huésped por ID
+      description: Devuelve los datos de un huésped.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: guest_id
+          in: path
+          required: true
+          description: Identificador único UUID del huésped
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Huésped encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Guest"
+        '400':
+          description: Petición mal formada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '404':
+          description: Huésped no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+    patch:
+      tags: [Guest]
+      summary: Actualizar parcialmente un huésped
+      description: Modifica uno o varios datos de un huésped existente.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: guest_id
+          in: path
+          required: true
+          description: Identificador único UUID del huésped
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GuestUpdate"
+      responses:
+        '202':
+          description: Huésped actualizado correctamente
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Guest"
+        '400':
+          description: Petición mal formada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '404':
+          description: Huésped no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '409':
+          description: Conflicto de datos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+    delete:
+      tags: [Guest]
+      summary: Eliminar huésped por ID
+      description: Elimina un huésped de la base de datos.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: guest_id
+          in: path
+          required: true
+          description: Identificador único UUID del huésped
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Huésped eliminado correctamente
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Success"
+        '401':
+          description: No autorizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '404':
+          description: Huésped no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        Seguridad basada en JOSE: JWT, JWE, JWS, JWA.
+        El token debe ser válido, firmado y/o cifrado según el estándar JOSE.
+        Debe enviarse en Authorization: Bearer {token}.
+  schemas:
+    Guest:
+      type: object
+      description: Modelo completo de huésped
+      properties:
+        Guest_Id:
+          type: string
+          format: uuid
+        Hotel_Id:
+          type: string
+          format: uuid
+          description: "UUID del hotel al que pertenece el huésped (clave foránea hacia Hotel)"
+        Name:
+          type: string
+        LastName:
+          type: string
+        Email:
+          type: string
+          format: email
+        Phone:
+          type: string
+          pattern: "^[0-9+\\-() ]*$"
+        WhatsApp:
+          type: string
+          pattern: "^[0-9+\\-() ]*$"
+        DateOfBirth:
+          type: string
+          format: date
+        Genre:
+          type: string
+          enum: [male, female, other, undisclosed]
+        Nationality:
+          type: string
+        Address:
+          type: string
+        Country:
+          type: string
+        Doc_Type:
+          type: string
+        Document:
+          type: string
+        Comments:
+          type: string
+        Create_at:
+          type: string
+          format: date-time
+        Update_at:
+          type: string
+          format: date-time
+      required:
+        - Guest_Id
+        - Hotel_Id
+        - Name
+        - LastName
+        - Email
+        - Genre
+        - Country
+        - Doc_Type
+        - Document
+        - Create_at
+        - Update_at
+
+    GuestCreate:
+      type: object
+      description: Datos requeridos para crear huésped
+      properties:
+        Hotel_Id:
+          type: string
+          format: uuid
+          description: "UUID del hotel al que pertenece el huésped (clave foránea hacia Hotel)"
+        Name:
+          type: string
+        LastName:
+          type: string
+        Email:
+          type: string
+          format: email
+        Phone:
+          type: string
+          pattern: "^[0-9+\\-() ]*$"
+        WhatsApp:
+          type: string
+          pattern: "^[0-9+\\-() ]*$"
+        DateOfBirth:
+          type: string
+          format: date
+        Genre:
+          type: string
+          enum: [male, female, other, undisclosed]
+        Nationality:
+          type: string
+        Address:
+          type: string
+        Country:
+          type: string
+        Doc_Type:
+          type: string
+        Document:
+          type: string
+        Comments:
+          type: string
+      required:
+        - Hotel_Id
+        - Name
+        - LastName
+        - Email
+        - Genre
+        - Country
+        - Doc_Type
+        - Document
+
+    GuestUpdate:
+      type: object
+      description: Datos opcionales para actualizar huésped
+      properties:
+        Name:
+          type: string
+        LastName:
+          type: string
+        Email:
+          type: string
+          format: email
+        Phone:
+          type: string
+          pattern: "^[0-9+\\-() ]*$"
+        WhatsApp:
+          type: string
+          pattern: "^[0-9+\\-() ]*$"
+        DateOfBirth:
+          type: string
+          format: date
+        Genre:
+          type: string
+          enum: [male, female, other, undisclosed]
+        Nationality:
+          type: string
+        Address:
+          type: string
+        Country:
+          type: string
+        Doc_Type:
+          type: string
+        Document:
+          type: string
+        Comments:
+          type: string
+
+    Error:
+      type: object
+      properties:
+        code:
+          type: integer
+        message:
+          type: string
+      required: [code, message]
+
+    Success:
+      type: object
+      properties:
+        detail:
+          type: string
+      required: [detail]

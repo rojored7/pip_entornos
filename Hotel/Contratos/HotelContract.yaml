@@ -1,0 +1,306 @@
+openapi: 3.0.3
+info:
+  title: API de Hotel
+  version: 1.0.0
+  description: |
+    API profesional para gestión de hoteles.
+    Seguridad basada en [JOSE](https://datatracker.ietf.org/wg/jose/about/): JWT, JWE, JWS, JWA.
+    Todas las operaciones requieren tokens válidos y firmados/cifrados según el estándar JOSE.
+    Los tokens deben ser enviados usando el header Authorization: Bearer {token}.
+
+servers:
+  - url: https://api.labred.uk
+tags:
+  - name: Hotel
+    description: Endpoints para gestión de hoteles
+
+paths:
+  /hotels:
+    put:
+      tags: [Hotel]
+      summary: Crear un hotel (idempotente)
+      description: Crea un nuevo hotel. Si el hotel ya existe, responde 409.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HotelCreate"
+      responses:
+        '200':
+          description: Hotel creado correctamente
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Hotel"
+        '400':
+          description: Petición mal formada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '401':
+          description: No autorizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '409':
+          description: Hotel ya existe (conflicto)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /hotels/{hotel_id}:
+    get:
+      tags: [Hotel]
+      summary: Obtener hotel por ID
+      description: Devuelve los datos de un hotel existente.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: hotel_id
+          in: path
+          required: true
+          description: Identificador único UUID del hotel
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Hotel encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Hotel"
+        '400':
+          description: Petición mal formada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '404':
+          description: Hotel no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+    patch:
+      tags: [Hotel]
+      summary: Actualizar parcialmente un hotel
+      description: Modifica uno o varios datos de un hotel existente.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: hotel_id
+          in: path
+          required: true
+          description: Identificador único UUID del hotel
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HotelUpdate"
+      responses:
+        '202':
+          description: Hotel actualizado correctamente
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Hotel"
+        '400':
+          description: Petición mal formada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '404':
+          description: Hotel no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '409':
+          description: Conflicto de datos (ej. violación de unicidad)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+    delete:
+      tags: [Hotel]
+      summary: Eliminar hotel por ID
+      description: Elimina un hotel de la base de datos.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: hotel_id
+          in: path
+          required: true
+          description: Identificador único UUID del hotel
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Hotel eliminado correctamente
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Success"
+        '401':
+          description: No autorizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '404':
+          description: Hotel no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        Seguridad basada en JOSE: JWT, JWE, JWS, JWA.
+        El token debe ser válido, firmado y/o cifrado según el estándar JOSE.
+        Debe enviarse en Authorization: Bearer {token}.
+  schemas:
+    Hotel:
+      type: object
+      description: Modelo completo de hotel
+      properties:
+        Hotel_Id:
+          type: string
+          format: uuid
+        Name:
+          type: string
+        Branch:
+          type: string
+        Address:
+          type: string
+        City:
+          type: string
+        Country:
+          type: string
+        TimeZone:
+          type: string
+        Telefono:
+          type: integer
+        Create_at:
+          type: string
+          format: date-time
+        Update_at:
+          type: string
+          format: date-time
+      required:
+        - Hotel_Id
+        - Name
+        - Branch
+        - Address
+        - City
+        - Country
+        - TimeZone
+        - Telefono
+        - Create_at
+        - Update_at
+
+    HotelCreate:
+      type: object
+      description: Datos para crear hotel
+      properties:
+        Name:
+          type: string
+        Branch:
+          type: string
+        Address:
+          type: string
+        City:
+          type: string
+        Country:
+          type: string
+        TimeZone:
+          type: string
+        Telefono:
+          type: integer
+      required:
+        - Name
+        - Branch
+        - Address
+        - City
+        - Country
+        - TimeZone
+        - Telefono
+
+    HotelUpdate:
+      type: object
+      description: Datos para actualizar parcialmente un hotel
+      properties:
+        Name:
+          type: string
+        Branch:
+          type: string
+        Address:
+          type: string
+        City:
+          type: string
+        Country:
+          type: string
+        TimeZone:
+          type: string
+        Telefono:
+          type: integer
+
+    Error:
+      type: object
+      properties:
+        code:
+          type: integer
+        message:
+          type: string
+      required: [code, message]
+
+    Success:
+      type: object
+      properties:
+        detail:
+          type: string
+      required: [detail]
